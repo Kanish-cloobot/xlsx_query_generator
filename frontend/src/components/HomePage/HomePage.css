@@ -1,0 +1,129 @@
+/* Main Container */
+.home-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background-color: #2a2a2a;
+    position: relative;
+    flex-direction: column;
+  }
+  
+  /* Navigation Bar Styles */
+  .navbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    padding: 20px;
+    text-align: center;
+    z-index: 1000; /* Keeps navbar above content */
+  }
+  
+  .navbar h2 {
+    color: white;
+    margin-bottom: 20px;
+  }
+  
+  .nav-items {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+  }
+  
+  .nav-item {
+    text-decoration: none;
+    font-size: 18px;
+    padding: 12px 24px;
+    margin: 10px;
+    background: rgba(0, 0, 0, 0.4);
+    color: white;
+    border-radius: 10px;
+    transition: 0.3s;
+  }
+  
+  .nav-item:hover {
+    background: rgba(255, 255, 255, 0.3);
+    color: #2a2a2a;
+  }
+  
+  /* Optional: Add shadow effect for nav items */
+  .nav-item:focus,
+  .nav-item:hover {
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+  }
+  
+  /* Content Area Styles */
+  .layout {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    padding-top: 100px; /* Offset for fixed navbar */
+  }
+  
+  .content-area {
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.1);
+    height: 100vh;
+    overflow-y: auto;
+    flex-grow: 1;
+  }
+  
+  .content-area h3 {
+    font-size: 24px;
+    color: white;
+  }
+  
+  /* Optional: Squares animation */
+  .square {
+    position: absolute;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    animation: rotate 5s infinite linear;
+  }
+  
+  .square:nth-child(1) {
+    width: 50px;
+    height: 50px;
+    top: 10%;
+    left: 10%;
+  }
+  
+  .square:nth-child(2) {
+    width: 70px;
+    height: 70px;
+    top: 30%;
+    left: 30%;
+  }
+  
+  .square:nth-child(3) {
+    width: 90px;
+    height: 90px;
+    top: 50%;
+    left: 50%;
+  }
+  
+  .square:nth-child(4) {
+    width: 60px;
+    height: 60px;
+    top: 70%;
+    left: 70%;
+  }
+  
+  .square:nth-child(5) {
+    width: 80px;
+    height: 80px;
+    top: 90%;
+    left: 90%;
+  }
+  
+  @keyframes rotate {
+    0% {
+      transform: rotate(0deg);
+    }
+    100% {
+      transform: rotate(360deg);
+    }
+  }
+  

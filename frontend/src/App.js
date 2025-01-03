@@ -1,5 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router';
+import AuthPage from './components/AuthPage/AuthPage';
+import HomePage from './components/HomePage/HomePage';
 
 
 import './App.css';
@@ -27,7 +29,11 @@ function App() {
     <Router>
       <div className="App">
         <Routes>
-          {/* <Route path="/" element={<Game />} /> */}
+        <Route path="/" element={<AuthPage />} />
+        <Route path="/home" element={<HomePage />} />  
+        {/* <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/settings" element={<SettingsPage />} />
+        <Route path="/logout" element={<LogoutPage />} />       */}
         </Routes>
       </div>
     </Router>
@@ -35,3 +41,4 @@ function App() {
 }
 
 export default App;
+

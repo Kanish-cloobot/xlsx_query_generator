@@ -1,0 +1,18 @@
+/* src/components/Profile.css */
+.profile-section {
+    background-color: rgba(255, 255, 255, 0.1);
+    padding: 20px;
+    border-radius: 8px;
+    color: white;
+  }
+  
+  .profile-section h3 {
+    font-size: 24px;
+    color: white;
+  }
+  
+  .profile-section p {
+    font-size: 18px;
+    color: rgba(255, 255, 255, 0.7);
+  }
+  
