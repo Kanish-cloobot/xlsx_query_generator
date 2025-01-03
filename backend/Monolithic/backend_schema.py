@@ -7,6 +7,7 @@ from postgres_utils import *
 def init_pg_tables():
     #initializing postgresql database
     conn = psycopg2.connect(database=DB_NAME, user = DB_USER, password = DB_PASS, host = DB_HOST, port = DB_PORT)
+    print("i am here")
     cur = conn.cursor()
 
     cur.execute('''
