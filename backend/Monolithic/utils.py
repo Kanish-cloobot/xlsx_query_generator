@@ -209,6 +209,7 @@ def query_generator(file_data, user_id, user_query, usecase):
                 
                 # Construct the table name (strip file extension)
                     table_name = os.path.splitext(file.filename)[0]
+                    print_statement("table_name ::",table_name)
                     model = setup_gemini()
                     # Replace placeholders in the prompt
                     prompt = extraction_prompt.replace("<df>", df.to_string(index=False))
@@ -238,6 +239,7 @@ def query_generator(file_data, user_id, user_query, usecase):
                     # res = response.choices[0].message.content.strip()
                     response = model.generate(prompt)
                     res = response.text.strip()
+                    print_statement("res ::",res)
                     # Look for content between <answer> tags and clean it
                     if '<answer>' in res and '</answer>' in res:
                         json_str = res.split('<answer>')[1].split('</answer>')[0].strip()
@@ -256,6 +258,7 @@ def query_generator(file_data, user_id, user_query, usecase):
 
                     messages=[{"role": "user", "content": prompt}]
                     response = model.generate(prompt)
+                    print_statement("response ::",response)
                     generated_query = response.text.strip()
                     if generated_query:
                         id,status = inser_records(user_id,user_query,usecase,generated_query)
