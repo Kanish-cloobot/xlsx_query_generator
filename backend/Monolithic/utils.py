@@ -19,11 +19,11 @@ from Monolithic.postgres_utils import get_row_by_id,get_rows_by_col,insert_new_r
 
 
 os.environ['GEMINI_API_KEY'] = "AIzaSyChbvX4KEqTygPSYTEEtp7e24cAGdNE3Ag"
-genai.configure(api_key=os.getenv("AIzaSyChbvX4KEqTygPSYTEEtp7e24cAGdNE3Ag"))
+genai.configure(api_key="AIzaSyChbvX4KEqTygPSYTEEtp7e24cAGdNE3Ag")
 
 def setup_gemini():
     generation_config = {
-        "temperature": 0.9,
+        "temperature": 0.1,
         "top_p": 0.9,
         "top_k": 40,
         "max_output_tokens": 8192,
