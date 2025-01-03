@@ -1,6 +1,5 @@
 import psycopg2
-from constants import *
-from postgres_utils import *
+from Monolithic.constants import *
 
 # connecting flask
 
