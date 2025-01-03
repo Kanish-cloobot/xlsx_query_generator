@@ -1,6 +1,6 @@
 import psycopg2
-from Monolithic.constants import *
-from Monolithic.postgres_utils import *
+from constants import *
+from postgres_utils import *
 
 # connecting flask
 
@@ -21,10 +21,3 @@ def init_pg_tables():
                   );
             ''')
     
-    # cur.execute('''
-    #                 CREATE TABLE files
-    #             ''')
-
-
-
-
