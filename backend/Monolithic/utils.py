@@ -255,11 +255,8 @@ def query_generator(file_data, user_id, user_query, usecase):
 
 
                     messages=[{"role": "user", "content": prompt}]
-                    response = completion(
-                        model=MODEL,
-                        messages=messages,
-                            )
-                    generated_query = response.choices[0].message.content
+                    response = model.generate(prompt)
+                    generated_query = response.text.strip()
                     if generated_query:
                         id,status = inser_records(user_id,user_query,usecase,generated_query)
                         os.remove(temp_path)
