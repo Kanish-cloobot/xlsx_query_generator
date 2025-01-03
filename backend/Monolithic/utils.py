@@ -11,6 +11,7 @@ import random
 import math
 import pandas as pd
 from mimetypes import guess_extension
+import google.generativeai as genai
 from Monolithic.constants import *
 import os
 from litellm import completion
@@ -18,7 +19,21 @@ from Monolithic.postgres_utils import get_row_by_id,get_rows_by_col,insert_new_r
 
 
 os.environ['GEMINI_API_KEY'] = "AIzaSyChbvX4KEqTygPSYTEEtp7e24cAGdNE3Ag"
+genai.configure(api_key=os.getenv("AIzaSyChbvX4KEqTygPSYTEEtp7e24cAGdNE3Ag"))
 
+def setup_gemini():
+    generation_config = {
+        "temperature": 0.9,
+        "top_p": 0.9,
+        "top_k": 40,
+        "max_output_tokens": 8192,
+        
+    }
+    
+    return genai.GenerativeModel(
+        model_name="gemini-2.0-flash-exp",
+        generation_config=generation_config,
+    )
 
 def get_gmt_timestamp():
     return datetime.utcnow()
@@ -194,33 +209,35 @@ def query_generator(file_data, user_id, user_query, usecase):
                 
                 # Construct the table name (strip file extension)
                     table_name = os.path.splitext(file.filename)[0]
-                    
+                    model = setup_gemini()
                     # Replace placeholders in the prompt
                     prompt = extraction_prompt.replace("<df>", df.to_string(index=False))
                     prompt = prompt.replace("<table_name>", table_name)
-                    response = completion(
-                        model= MODEL,
-                        messages=[{"role": "user", "content": prompt}],
-                        safety_settings=[
-                            {
-                                "category": "HARM_CATEGORY_HARASSMENT",
-                                "threshold": "BLOCK_NONE",
-                            },
-                            {
-                                "category": "HARM_CATEGORY_HATE_SPEECH",
-                                "threshold": "BLOCK_NONE",
-                            },
-                            {
-                                "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT",
-                                "threshold": "BLOCK_NONE",
-                            },
-                            {
-                                "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
-                                "threshold": "BLOCK_NONE",
-                            },
-                        ]
-                    )
-                    res = response.choices[0].message.content.strip()
+                    # response = completion(
+                    #     model= MODEL,
+                    #     messages=[{"role": "user", "content": prompt}],
+                    #     safety_settings=[
+                    #         {
+                    #             "category": "HARM_CATEGORY_HARASSMENT",
+                    #             "threshold": "BLOCK_NONE",
+                    #         },
+                    #         {
+                    #             "category": "HARM_CATEGORY_HATE_SPEECH",
+                    #             "threshold": "BLOCK_NONE",
+                    #         },
+                    #         {
+                    #             "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+                    #             "threshold": "BLOCK_NONE",
+                    #         },
+                    #         {
+                    #             "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
+                    #             "threshold": "BLOCK_NONE",
+                    #         },
+                    #     ]
+                    # )
+                    # res = response.choices[0].message.content.strip()
+                    response = model.generate(prompt)
+                    res = response.text.strip()
                     # Look for content between <answer> tags and clean it
                     if '<answer>' in res and '</answer>' in res:
                         json_str = res.split('<answer>')[1].split('</answer>')[0].strip()
