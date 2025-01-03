@@ -273,3 +273,29 @@ def exec_without_fetch(query_string):
         reset_db(e)
         
     return True
+
+
+# Read functions
+def get_row_by_id(table_name, id_key, id_val):
+    cur = global_init_db()
+    if cur:
+        exec_str = "SELECT * from " + table_name
+        if id_key and id_val:
+            if type(id_val) == int:
+                exec_str += " WHERE " + id_key + "=" + str(id_val)
+            else:
+                exec_str += " WHERE " + id_key + "='" + id_val + "'"
+
+        try:
+            cur.execute(exec_str)
+            update_db()
+            rows = cur.fetchall()
+            return rows
+            ##print(rows)
+            # for row in rows:
+            #     #print(row['user_id'])
+        except Exception as e:
+            print("Error in cur.execute::",e,"::",exec_str)
+            reset_db(e)
+            
+    return []

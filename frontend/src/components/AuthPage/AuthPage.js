@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom"; // Import useNavigate
 import "./AuthPage.css";
+import httpClient from '../../httpClient';
 
 const AuthPage = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -12,6 +13,8 @@ const AuthPage = () => {
     password: "",
   });
   const [errors, setErrors] = useState({});
+  const [success, setSuccess] = useState("");
+  const [error, setError] = useState("");
   const navigate = useNavigate(); // Initialize navigate function
 
   const toggleForm = () => {
@@ -20,12 +23,42 @@ const AuthPage = () => {
     setErrors({}); // Clear errors
   };
 
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleLogin = async (event) => {
+    try {
+      const loginData = {
+        email: formData.email,
+        password: formData.password,
+      };
+  
+      const response = await httpClient.post('/checklogin', loginData); // Sending only email and password
+      const res = response.data;
+  
+      // Handle successful login
+      setSuccess("Login successful");
+      sessionStorage.setItem('token', res.data);
+      sessionStorage.setItem('user_id', res.user_id);
+      sessionStorage.setItem('user_name', res.user_name);
+      navigate('/home');        
+    } catch (error) {
+      setError('Try login after mail verification.');
+      console.error('Error:', error);
+      // Handle network or other errors
+    }
+  };
+  
   const validate = () => {
     const newErrors = {};
-    if (!formData.username.trim()) {
+  
+    // Only validate username during registration (not login)
+    if (!isLogin && !formData.username.trim()) {
       newErrors.username = "Username is required";
     }
-
+  
     if (!isLogin && !formData.email.trim()) {
       newErrors.email = "Email is required";
     } else if (
@@ -34,20 +67,32 @@ const AuthPage = () => {
     ) {
       newErrors.email = "Invalid email address";
     }
-
+  
     if (!formData.password.trim()) {
       newErrors.password = "Password is required";
     } else if (formData.password.length < 6) {
       newErrors.password = "Password must be at least 6 characters long";
     }
-
+  
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0; // Return true if no errors
   };
+  
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+  const handleRegister = async () => {
+    try {
+      const response = await httpClient.post('/register', formData);
+      const res = response.data;
+
+      // Handle successful registration
+      setSuccess("Account created successfully!");
+      setFormData({ username: "", email: "", password: "" }); // Reset form
+      setErrors({});
+      navigate('/login'); // Redirect to login after registration
+    } catch (error) {
+      setError('Error during registration.');
+      console.error('Error:', error);
+    }
   };
 
   const handleSubmit = (e) => {
@@ -55,12 +100,9 @@ const AuthPage = () => {
     if (validate()) {
       // On successful login, redirect to home page
       if (isLogin) {
-        alert("Login Successful");
-        navigate("/home"); // Redirect to home page
+        handleLogin();
       } else {
-        alert("Account Created Successfully");
-        setFormData({ username: "", email: "", password: "" });
-        setErrors({});
+        handleRegister();
       }
     }
   };

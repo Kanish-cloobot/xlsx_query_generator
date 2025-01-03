@@ -3,8 +3,6 @@ import React from 'react';
 import './Termscondition.css'; // Link to the Profile.css file
 
 
-
-
 const TermsConditions = () => {
   return (
     <div className="terms-conditions-section">
