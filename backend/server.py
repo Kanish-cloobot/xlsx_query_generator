@@ -18,7 +18,7 @@ import traceback
 # from constants import *
 # from utils import *
 from datetime import datetime
-app = Flask(_name_,template_folder='assets/html_templates')
+app = Flask(__name__,template_folder='assets/html_templates')
 
 app.debug = True
 
