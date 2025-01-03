@@ -85,14 +85,14 @@ def upload_book_files():
         return jsonify({"status": False, "msg": "Error in parsing request"}), 400
     
     # Extract and validate authorization token
-    headers = request.headers
-    bearer = headers.get('Authorization')
-    if not bearer:
-        return jsonify({"status": False, "msg": "Authorization header is missing"}), 401
-    token = bearer.split()[1]
-    status, user_id = valid_user(token)
-    if not user_id:
-        return jsonify({"status": False, "msg": "Invalid user or token"}), 401
+    # headers = request.headers
+    # bearer = headers.get('Authorization')
+    # if not bearer:
+    #     return jsonify({"status": False, "msg": "Authorization header is missing"}), 401
+    # token = bearer.split()[1]
+    # status, user_id = valid_user(token)
+    # if not user_id:
+    #     return jsonify({"status": False, "msg": "Invalid user or token"}), 401
     
     # Create workspace and upload files
     query,status= query_generator(files_data,user_id,user_query,usecase)
