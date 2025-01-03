@@ -77,6 +77,7 @@ def upload_book_files():
     try:
         user_id   = request.form.get('user_id')
         files_data = request.files.getlist('attachments')
+        print_statement('files_data:', files_data)
         user_query = request.form.get("user_query")
         usecase = request.form.get("usecase")
     except Exception as e:

@@ -104,7 +104,7 @@ const Actions = () => {
 
 
         <div className="text-input-section">
-          <h4>Enter Details</h4>
+          <h4>Enter Usecase</h4>
           <textarea
             placeholder="Type something here..."
             className="stylish-text-input"
@@ -120,7 +120,7 @@ const Actions = () => {
         </div>
 
         <div className="text-input-section">
-          <h4>Enter Details</h4>
+          <h4>Your Needs Here...</h4>
           <textarea
             placeholder="Type something here..."
             className="stylish-text-input"

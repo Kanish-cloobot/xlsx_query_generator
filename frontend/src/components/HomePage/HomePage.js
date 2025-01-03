@@ -15,7 +15,9 @@ const HomePage = () => {
       <div className="layout">
         {/* Floating Navigation Bar */}
         <div className="navbar">
+        <h3 className="nav-head">SQL Query Generator</h3>
           <div className="nav-items">
+            
             <Link to="about" className="nav-item">
               About
             </Link>
@@ -28,6 +30,10 @@ const HomePage = () => {
             <Link to="terms-conditions" className="nav-item">
               Terms and Conditions
             </Link>
+            <Link to="/" className="nav-item">
+              Logout
+            </Link>
+            
           </div>
         </div>
 

@@ -167,6 +167,7 @@ def get_token(useremail, password):
 
 def query_generator(file_data, user_id, user_query, usecase):
     if file_data:
+        print_statement("file_data ::",file_data)
         temp_schema = ""
         # Iterate through all files in the file_data list
         for filename in file_data:
