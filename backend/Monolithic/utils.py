@@ -176,65 +176,79 @@ def query_generator(file_data, user_id, user_query, usecase):
             if file.filename.endswith((".xls", ".xlsx")):  # Check for Excel files
                 print(f"Processing file: {file.filename}")
                 
-                # Use pd.read_excel directly on the FileStorage object, which is binary data
-                df = pd.read_excel(file)
-                df = df.head(10)  # Process only the first 10 rows, as per your original code
+                # Define the temporary file path
+                temp_path = os.path.join(os.getcwd(), file.filename)
+                
+                # Save the file temporarily to disk
+                file.save(temp_path)
+                
+                # Ensure the file exists after saving it temporarily
+                if not os.path.exists(temp_path):
+                    print(f"File does not exist: {temp_path}")
+                    continue
+                
+                # Read the Excel file from the temporary path into a pandas DataFrame
+                try:
+                    df = pd.read_excel(temp_path)
+                    df = df.head(10)  
                 
                 # Construct the table name (strip file extension)
-                table_name = os.path.splitext(file.filename)[0]
-                
-                # Replace placeholders in the prompt
-                prompt = extraction_prompt.replace("<df>", df.to_string(index=False))
-                prompt = prompt.replace("<table_name>", table_name)
-                response = completion(
-                    model= MODEL,
-                    messages=[{"role": "user", "content": prompt}],
-                    safety_settings=[
-                        {
-                            "category": "HARM_CATEGORY_HARASSMENT",
-                            "threshold": "BLOCK_NONE",
-                        },
-                        {
-                            "category": "HARM_CATEGORY_HATE_SPEECH",
-                            "threshold": "BLOCK_NONE",
-                        },
-                        {
-                            "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT",
-                            "threshold": "BLOCK_NONE",
-                        },
-                        {
-                            "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
-                            "threshold": "BLOCK_NONE",
-                        },
-                    ]
-                )
-                res = response.choices[0].message.content.strip()
-                # Look for content between <answer> tags and clean it
-                if '<answer>' in res and '</answer>' in res:
-                    json_str = res.split('<answer>')[1].split('</answer>')[0].strip()
-                else:
-                    json_str = res.strip()
+                    table_name = os.path.splitext(file.filename)[0]
+                    
+                    # Replace placeholders in the prompt
+                    prompt = extraction_prompt.replace("<df>", df.to_string(index=False))
+                    prompt = prompt.replace("<table_name>", table_name)
+                    response = completion(
+                        model= MODEL,
+                        messages=[{"role": "user", "content": prompt}],
+                        safety_settings=[
+                            {
+                                "category": "HARM_CATEGORY_HARASSMENT",
+                                "threshold": "BLOCK_NONE",
+                            },
+                            {
+                                "category": "HARM_CATEGORY_HATE_SPEECH",
+                                "threshold": "BLOCK_NONE",
+                            },
+                            {
+                                "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+                                "threshold": "BLOCK_NONE",
+                            },
+                            {
+                                "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
+                                "threshold": "BLOCK_NONE",
+                            },
+                        ]
+                    )
+                    res = response.choices[0].message.content.strip()
+                    # Look for content between <answer> tags and clean it
+                    if '<answer>' in res and '</answer>' in res:
+                        json_str = res.split('<answer>')[1].split('</answer>')[0].strip()
+                    else:
+                        json_str = res.strip()
 
-                # Basic cleaning - remove any remaining XML-like tags
-                json_str = json_str.replace('<answer>', '').replace('</answer>', '')
-                json_str = json_str.replace('```json', '').replace("```",'')
-                temp_schema = temp_schema + f"-----------------------\n"
-                temp_schema = temp_schema + f"{json_str}\n"
-
-
-                prompt = QUERY_PROMPT.replace('{user_query}',user_query).replace('{temp_schema}',temp_schema)
+                    # Basic cleaning - remove any remaining XML-like tags
+                    json_str = json_str.replace('<answer>', '').replace('</answer>', '')
+                    json_str = json_str.replace('```json', '').replace("```",'')
+                    temp_schema = temp_schema + f"-----------------------\n"
+                    temp_schema = temp_schema + f"{json_str}\n"
 
 
-                messages=[{"role": "user", "content": prompt}]
-                response = completion(
-                    model=MODEL,
-                    messages=messages,
-                        )
-                generated_query = response.choices[0].message.content
-                if generated_query:
-                    id,status = inser_records(user_id,user_query,usecase,generated_query)
-                return generated_query,status
-    return None,False
+                    prompt = QUERY_PROMPT.replace('{user_query}',user_query).replace('{temp_schema}',temp_schema)
+
+
+                    messages=[{"role": "user", "content": prompt}]
+                    response = completion(
+                        model=MODEL,
+                        messages=messages,
+                            )
+                    generated_query = response.choices[0].message.content
+                    if generated_query:
+                        id,status = inser_records(user_id,user_query,usecase,generated_query)
+                        os.remove(temp_path)
+                    return generated_query,status
+                except Exception as e:
+                    return None,False
             
 
 def inser_records(user_id,user_query,usecase,generated_query):
