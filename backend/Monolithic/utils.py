@@ -214,6 +214,7 @@ def query_generator(file_data, user_id, user_query, usecase):
                     # Replace placeholders in the prompt
                     prompt = extraction_prompt.replace("<df>", df.to_string(index=False))
                     prompt = prompt.replace("<table_name>", table_name)
+                    print_statement("prompt ::",prompt)
                     # response = completion(
                     #     model= MODEL,
                     #     messages=[{"role": "user", "content": prompt}],
@@ -238,6 +239,7 @@ def query_generator(file_data, user_id, user_query, usecase):
                     # )
                     # res = response.choices[0].message.content.strip()
                     response = model.generate_content(prompt)
+                    print_statement("response ::",response)
                     res = response.text.strip()
                     print_statement("res ::",res)
                     # Look for content between <answer> tags and clean it
@@ -297,3 +299,130 @@ def get_user_id_from_email(useremail):
         row = user_info[0]
         return row[0]
     return None
+
+
+
+from flask import Flask, request, jsonify
+import os
+import google.generativeai as genai
+from dotenv import load_dotenv
+from flask_cors import CORS
+
+# Load environment variables
+load_dotenv()
+
+# Configure Gemini API
+genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+
+app = Flask(__name__)
+CORS(app)
+
+def setup_gemini():
+    generation_config = {
+        "temperature": 0.9,
+        "top_p": 0.9,
+        "top_k": 40,
+        "max_output_tokens": 8192,
+        
+    }
+    
+    return genai.GenerativeModel(
+        model_name="gemini-2.0-flash-exp",
+        generation_config=generation_config,
+    )
+
+def get_object(model, field):
+    try:
+        with open('object_prompt.txt', 'r') as file:
+            prompt = file.read().replace('{field}', field) + "\nPlease provide a random, different object each time."
+        
+        response = model.generate_content(prompt)
+        if not response.text:
+            return "computer"  # fallback object if generation fails
+        
+        # Clean up the response - take only the first line and remove any extra whitespace/punctuation
+        object_name = response.text.strip().split('\n')[0].strip('."\'')
+        return object_name
+    except Exception as e:
+        print(f"Error generating object: {e}")
+        return "computer"  # fallback object
+
+def get_hints(model, object_name, field):
+    try:
+        with open('generate_hints_prompt.txt', 'r') as file:
+            prompt = (file.read().replace('{{OBJECT}}', object_name)
+                     .replace('{{FIELD}}', field) + 
+                     "\nProvide unique and creative hints different from previous ones.")
+        
+        response = model.generate_content(prompt)
+        if not response.text:
+            return ["This object is used daily", 
+                   "It processes information",
+                   "It has a screen",
+                   "It has a keyboard",
+                   "It runs on electricity and can perform many tasks"]  # fallback hints
+        
+        # Split response into lines and clean up
+        hints = [hint.strip() for hint in response.text.split('\n') if hint.strip()]
+        
+        # Ensure we have exactly 5 hints
+        if len(hints) < 5:
+            hints.extend(["This object is interesting",
+                         "It's commonly used",
+                         "It's important in modern times",
+                         "Many people interact with it",
+                         "It's essential for work"][:5 - len(hints)])
+        return hints[:5]  # Return exactly 5 hints
+    except Exception as e:
+        print(f"Error generating hints: {e}")
+        return ["This object is used daily", 
+                "It processes information",
+                "It has a screen",
+                "It has a keyboard",
+                "It runs on electricity and can perform many tasks"]  # fallback hints
+
+def calculate_score(num_guesses):
+    max_score = 100
+    penalty_per_guess = 20
+    score = max_score - (num_guesses - 1) * penalty_per_guess
+    return max(score, 0)
+
+@app.route('/api/game', methods=['POST'])
+def game_api():
+    try:
+        data = request.get_json()
+        if not data or 'field' not in data:
+            return jsonify({'error': 'Field of interest is required'}), 400
+        
+        field = data['field'].strip()
+        if not field:
+            return jsonify({'error': 'Field cannot be empty'}), 400
+            
+        # Initialize model once and store it globally
+        if not hasattr(app, '_model'):
+            app._model = setup_gemini()
+        
+        object_name = get_object(app._model, field)
+        if not object_name:
+            return jsonify({'error': 'Failed to generate object'}), 500
+            
+        hints = get_hints(app._model, object_name, field)
+        if not hints:
+            return jsonify({'error': 'Failed to generate hints'}), 500
+        
+        return jsonify({
+            'hints': hints,
+            'object': object_name
+        })
+    
+    except Exception as e:
+        print(f"Error in game_api: {e}")
+        return jsonify({'error': 'An unexpected error occurred'}), 500
+
+# Add a health check endpoint
+@app.route('/api/health', methods=['GET'])
+def health_check():
+    return jsonify({'status': 'healthy'}), 200
+
+if __name__ == '__main__':
+    app.run(debug=True)
