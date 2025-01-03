@@ -237,7 +237,7 @@ def query_generator(file_data, user_id, user_query, usecase):
                     #     ]
                     # )
                     # res = response.choices[0].message.content.strip()
-                    response = model.generate(prompt)
+                    response = model.generate_content(prompt)
                     res = response.text.strip()
                     print_statement("res ::",res)
                     # Look for content between <answer> tags and clean it
@@ -257,7 +257,7 @@ def query_generator(file_data, user_id, user_query, usecase):
 
 
                     messages=[{"role": "user", "content": prompt}]
-                    response = model.generate(prompt)
+                    response = model.generate_content(prompt)
                     print_statement("response ::",response)
                     generated_query = response.text.strip()
                     if generated_query:
