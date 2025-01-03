@@ -1,18 +1,18 @@
-/* src/components/Profile.css */
 .profile-section {
-    background-color: rgba(255, 255, 255, 0.1);
-    padding: 20px;
-    border-radius: 8px;
-    color: white;
-  }
-  
-  .profile-section h3 {
-    font-size: 24px;
-    color: white;
-  }
-  
-  .profile-section p {
-    font-size: 18px;
-    color: rgba(255, 255, 255, 0.7);
-  }
-  
+  padding: 20px;
+  max-width: 600px;
+  margin: 0 auto;
+  background: #f9f9f9;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.profile-details p {
+  font-size: 16px;
+  margin: 8px 0;
+}
+
+.error-message {
+  color: red;
+  font-weight: bold;
+}

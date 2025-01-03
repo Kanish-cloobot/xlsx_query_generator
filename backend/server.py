@@ -5,7 +5,7 @@ import pickle
 import random 
 import sys
 # from Monolithic.postgres_utils import global_init_db,global_init_db_vector
-from Monolithic.utils import print_statement,valid_user,query_generator,register,get_users_verification_status
+from Monolithic.utils import print_statement,valid_user,query_generator,register,get_users_verification_status,fetch_user_data
 # from Monolithic.postgres_utils import global_init_db,global_init_db_vector
 import logging
 from logging import FileHandler
@@ -101,7 +101,16 @@ def upload_book_files():
         return jsonify({'status': False, 'data': None, 'msg': 'Workspace creation or file upload failed'}), 500
     
 
-    
+@app.route('/getUserDetails', methods=['GET','POST'])
+def getUserDetails():
+    # print("login",request.data.decode("UTF-8"))
+    dict_ = request.data.decode("UTF-8")
+    mydata = json.loads(dict_)
+    outputResponse,status = fetch_user_data(mydata['user_id'])
+    if status:
+        return {"data" : outputResponse}
+    else:
+        return {"data":False}   
 
 
 

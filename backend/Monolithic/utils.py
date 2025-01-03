@@ -256,9 +256,15 @@ def inser_records(user_id,user_query,usecase,generated_query):
     status,id = insert_new_row_return_id(PG_TABLE_RECORDS,insert_dict,pg_col_name_dict[PG_TABLE_RECORDS][0])
     return id , True
 
+def fetch_user_data(user_id):
+    user_info = get_rows_by_col(PG_TABLE_USERS, pg_col_name_dict[PG_TABLE_USERS][0], user_id)
+    if user_info:
+        user_name = user_info[0][1]
+        user_mail = user_info[0][2]
+        return {"username":user_name,"email":user_mail},True
+    return {user_info:"User does not exist"},False
 
 
-            
 def get_user_id_from_email(useremail):
     user_info = get_rows_by_col(PG_TABLE_USERS, pg_col_name_dict[PG_TABLE_USERS][2], useremail)     
     if len(user_info):
