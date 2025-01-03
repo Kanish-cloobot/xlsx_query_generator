@@ -4,7 +4,7 @@ import psycopg2.extras
 # connecting flask
 from psycopg2.extras import execute_values
 
-from Monolithic.constants import *
+from constants import *
 
 conn = None
 conn_vector = None
