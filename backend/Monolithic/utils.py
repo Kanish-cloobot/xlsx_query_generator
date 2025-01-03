@@ -167,29 +167,23 @@ def get_token(useremail, password):
 
 def query_generator(file_data, user_id, user_query, usecase):
     if file_data:
-        print_statement("file_data ::",file_data)
+        print("file_data ::", file_data)
         temp_schema = ""
+        
         # Iterate through all files in the file_data list
-        for filename in file_data:
-            if filename.endswith((".xls", ".xlsx")):  # Check for Excel files
-                # Check if the file is an absolute path or relative
-                if not os.path.isabs(filename):
-                    # Construct the full path using the current working directory
-                    file_path = os.path.join(os.getcwd(), filename)
-                else:
-                    file_path = filename
-
-                # Ensure the file exists
-                if not os.path.exists(file_path):
-                    print(f"File does not exist: {file_path}")
-                    continue
-
-                # Read the Excel file into a pandas DataFrame
-                df = pd.read_excel(file_path)
-                df = df.head(10)
-
+        for file in file_data:
+            # Check if the file is an Excel file (based on its extension)
+            if file.filename.endswith((".xls", ".xlsx")):  # Check for Excel files
+                print(f"Processing file: {file.filename}")
+                
+                # Use pd.read_excel directly on the FileStorage object, which is binary data
+                df = pd.read_excel(file)
+                df = df.head(10)  # Process only the first 10 rows, as per your original code
+                
                 # Construct the table name (strip file extension)
-                table_name = os.path.splitext(os.path.basename(file_path))[0]
+                table_name = os.path.splitext(file.filename)[0]
+                
+                # Replace placeholders in the prompt
                 prompt = extraction_prompt.replace("<df>", df.to_string(index=False))
                 prompt = prompt.replace("<table_name>", table_name)
                 response = completion(
