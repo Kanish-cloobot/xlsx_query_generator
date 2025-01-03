@@ -38,7 +38,7 @@ ENVIRONMENT = "Server"
 def hello2():
     return "<h1 style='color:blue'>Hello world :)</h1>"
 
-if _name_ == '_main_':
+if __name__ == '__main__':
     # print_statement("Server initated")
     # Initialisaing logger
     logging.basicConfig(filename='serverlog_'+str(datetime.today().strftime("%D").replace("/","-"))+'.log', level=logging.DEBUG, force=True, filemode='a')
