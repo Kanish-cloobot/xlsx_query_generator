@@ -5,7 +5,7 @@ import pickle
 import random 
 import sys
 # from Monolithic.postgres_utils import global_init_db,global_init_db_vector
-from Monolithic.utils import print_statement,valid_user,query_generator
+from Monolithic.utils import print_statement,valid_user,query_generator,register,get_users_verification_status
 # from Monolithic.postgres_utils import global_init_db,global_init_db_vector
 import logging
 from logging import FileHandler
@@ -35,22 +35,7 @@ ENVIRONMENT = "Server"
 
 
 
-
-
-
-@app.route('/check_login', methods=['POST'])
-def check_login():
-    try:
-        mydata = json.loads(request.data.decode("UTF-8"))
-        print_statement("get_round_format Json : ", json.dumps(mydata, indent=4))
-        status, user_id = login_user(mydata['user_name'])
-        return {"status": status, "user_id": user_id,"msg": "User logged in successfully"}
-    except json.JSONDecodeError:
-        print_statement('Error in json parsing')
-        print_statement(traceback.format_exc())
-        return {"data": False, "msg": "Error in parsing request"}
-
-@app.route('/ids_register', methods=['POST','OPTIONS'])
+@app.route('/register', methods=['POST','OPTIONS'])
 def register_user():
     
     dict_ = request.data.decode("UTF-8")
@@ -66,21 +51,25 @@ def register_user():
     status_user,already_exist_users,comment=  register(mydata)
     if status_user:
         if already_exist_users == "already":
-            return {"status" : False,"message_type":"Phone number or Email Id already exist"} 
-        elif status_user:
-            if 'sign_up_type' in mydata and mydata['sign_up_type'] == 'Google':
-                outputResponse = get_users_verification_status(mydata['email'], mydata['password'])
-                outputResponse['status'] = True
-                outputResponse['message_type'] = 'Success'
-                return outputResponse
-            else:
-                return {"status" : True,"message_type":"Success","verification_status":comment} 
+            return {"status" : False,"message":"Phone number or Email Id already exist"} 
+        else:
+            return {"status" : True,"message":"Success","verification_status":comment} 
     else:
-        return {"status" : False,"message_type":"Phone number or Email Id already exist"}   
+        return {"status" : False,"message":"Phone number or Email Id already exist"}                
+
+@app.route('/checklogin', methods=['GET','POST'])
+def signin():
+    ui_param = request.args.get('ui')
+    # print("login",request.data.decode("UTF-8"))
+    dict_ = request.data.decode("UTF-8")
+    mydata = json.loads(dict_)
+    outputResponse = get_users_verification_status(mydata['useremail'], mydata['password'])
+    if outputResponse['message'] in ['User does not exist','Password does not match']:
+        outputResponse['data'] = False
+        return outputResponse
+    else:
+        return {"data":False}
     
-
-
-
 
 @app.route('/upload_files', methods=['POST', 'OPTIONS'])
 def upload_book_files():
@@ -89,6 +78,7 @@ def upload_book_files():
         user_id   = request.form.get('user_id')
         files_data = request.files.getlist('attachments')
         user_query = request.form.get("user_query")
+        usecase = request.form.get("usecase")
     except Exception as e:
         print_statement('Error in parsing request:', str(e))
         return jsonify({"status": False, "msg": "Error in parsing request"}), 400
@@ -104,9 +94,9 @@ def upload_book_files():
         return jsonify({"status": False, "msg": "Invalid user or token"}), 401
     
     # Create workspace and upload files
-    status,id= query_generator(files_data,user_id,user_query)
+    query,status= query_generator(files_data,user_id,user_query,usecase)
     if status:
-        return jsonify({'status': True, 'data': status}), 201
+        return jsonify({'status': True, 'data': query}), 201
     else:
         return jsonify({'status': False, 'data': None, 'msg': 'Workspace creation or file upload failed'}), 500
     

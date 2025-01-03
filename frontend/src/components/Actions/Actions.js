@@ -1,10 +1,12 @@
 import React, { useState } from "react";
 import axios from "axios";
 import "./Actions.css";
+import httpClient from "../../httpClient";
 
 const Actions = () => {
   const [files, setFiles] = useState([]);
   const [textInput, setTextInput] = useState("");
+  const [textInputName, setTextInputName] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);  // New loading state
   const [responseText, setResponseText] = useState("");  // State to store the API response
@@ -23,7 +25,12 @@ const Actions = () => {
     setFiles(validFiles);
   };
 
+  
+
   const handleGenerateQuery = async () => {
+    const token = localStorage.getItem('token');
+    const user_id = localStorage.getItem('user_id');
+
     if (!files.length) {
       setError("Please upload at least one file.");
       return;
@@ -34,30 +41,31 @@ const Actions = () => {
       return;
     }
 
+    if (!textInputName.trim()) {
+      setError("Please enter some text.");
+      return;
+    }
+
     const formData = new FormData();
-    files.forEach((file) => formData.append("files", file));
-    formData.append("textInput", textInput);
+    files.forEach((file) => formData.append("attachments", file));
+    formData.append("user_query", textInput);
+    formData.append("usecase", textInputName);
+    formData.append("user_id", user_id);
 
     // Set loading state to true when starting the API request
     setLoading(true);
     setResponseText("");  // Clear previous response
 
     try {
-      const response = await axios.post("https://your-api-endpoint.com/query", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
-      console.log("Query generated:", response.data);
-      setResponseText(response.data);  // Set the API response
-    } catch (err) {
-      console.error("Error generating query:", err);
-      setError("Failed to generate query. Please try again.");
-    } finally {
-      // Set loading state to false when request completes
-      setLoading(false);
-    }
-  };
+        const response = await httpClient.post('/upload_files', formData); // Sending only email and password
+        const res = response.data;
+          
+      } catch (error) {
+        setError('Failed.');
+        console.error('Error:', error);
+        // Handle network or other errors
+      }
+    };
 
   // Function to handle copying text to clipboard
   const handleCopyToClipboard = () => {
@@ -92,6 +100,23 @@ const Actions = () => {
               </ul>
             </div>
           )}
+        </div>
+
+
+        <div className="text-input-section">
+          <h4>Enter Details</h4>
+          <textarea
+            placeholder="Type something here..."
+            className="stylish-text-input"
+            rows="1"
+            onInput={(e) => {
+              e.target.style.height = "auto"; // Reset height
+              e.target.style.height = `${e.target.scrollHeight}px`; // Adjust height
+            }}
+            value={textInputName}
+            onChange={(e) => setTextInputName(e.target.value)}
+            disabled={loading} // Disable input when loading
+          />
         </div>
 
         <div className="text-input-section">

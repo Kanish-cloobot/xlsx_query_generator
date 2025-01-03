@@ -40,6 +40,22 @@ pg_col_name_dict[PG_TABLE_USERS][4] = "user_created_timestamp"
 pg_col_name_dict[PG_TABLE_USERS][5] = "user_status"
 
 
+PG_TABLE_RECORDS = "records"
+pg_col_name_dict = {}
+pg_col_name_dict[PG_TABLE_RECORDS] = {}
+pg_col_name_dict[PG_TABLE_RECORDS][0] = "xqg_r_id"
+pg_col_name_dict[PG_TABLE_RECORDS][1] = "xqg_r_usecase"
+pg_col_name_dict[PG_TABLE_RECORDS][2] = "xqg_r_input_nl_query"
+pg_col_name_dict[PG_TABLE_RECORDS][3] = "xqg_r_generated_query"
+pg_col_name_dict[PG_TABLE_RECORDS][4] = "xqg_r_created_user_id" 
+pg_col_name_dict[PG_TABLE_RECORDS][5] = "xqg_r_created _timestamp"
+pg_col_name_dict[PG_TABLE_RECORDS][6] = "xqg_r_last_updated_user_id"
+pg_col_name_dict[PG_TABLE_RECORDS][7] = "xqg_r_last_updated_timestamp" 
+pg_col_name_dict[PG_TABLE_RECORDS][8] = "xqg_r_status"
+
+
+
+
 extraction_prompt = """You are tasked with extracting the schema description from a DataFrame and presenting it a text output.
 here is the first 10 records of the Table df:
 <df>

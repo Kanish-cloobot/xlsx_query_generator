@@ -14,12 +14,14 @@ from mimetypes import guess_extension
 from Monolithic.constants import *
 import os
 from litellm import completion
-from Monolithic.postgres_utils import get_row_by_id
-
+from Monolithic.postgres_utils import get_row_by_id,get_rows_by_col,insert_new_row,insert_new_row_return_id
 
 
 os.environ['GEMINI_API_KEY'] = "AIzaSyChbvX4KEqTygPSYTEEtp7e24cAGdNE3Ag"
 
+
+def get_gmt_timestamp():
+    return datetime.utcnow()
 
 
 def print_statement(*args):
@@ -37,46 +39,101 @@ def convert_datetime_to_string(data):
                 data[key] = value.isoformat()  # Convert to ISO 8601 format
     return data
 
-def register(mydata):
-    # Create organisation and get the status and org_id
-    
-    # If organisation creation is successful
-    if mydata:
+
+
+def register(mydata,normal_user = False):
+    email_user_row = get_user_row_from_mail_id(mydata['email'])
+    if email_user_row == None:
         people_info = [{
-            "user_name": mydata['user_name'],
-            "user_password": mydata['password'],
-            "user_email": mydata['email'],
-            "code": mydata['code'],
+            "user_name":mydata['username'],
+            "user_password":mydata['password'],
+            "user_email":mydata['email'],
         }]
-        
-        # Call people_update_changes to update user data
-        sign_up_type = 'email'
-        if 'sign_up_type' in mydata and mydata['sign_up_type'] == 'Google':
-            sign_up_type = 'Google'
-            
-        people_status, already, comments = people_update_changes(people_info, org_id, sign_up_type)
-        
-        # If user already exists
+        people_status,already,comment = people_update_changes(people_info)
+        print(people_status,already,comment)
         if already == "Already_exist":
-            return False, already, comments
-        
-        print_statement("people_status,already ::", people_status, already)
-        # If google signup alone - make automatically verified because they are already verified by Google
-        if people_status  and sign_up_type == 'Google':
-            user_id = already
-            insert_user_verification(user_id,mydata['email'],'Google')
-        return True, already, comments
-    
-    # If organisation creation failed
+            return False,already,None
+        print_statement("people_status,already :: ",people_status,already)
+        return True,already,comment
     else:
-        return False, [], []
+        return False,[],None
+    
+def get_users_verification_status(useremail, password):    #  function verifies that the mail is in the users table and user_verification table
+    print("user_email", useremail, "password", password)
+    try:
+        user_info = get_rows_by_col(PG_TABLE_USERS, "lower(" + pg_col_name_dict[PG_TABLE_USERS][2] + ")", useremail.lower())[0]
+        # print("user_info ::",user_info)
+        user_id = user_info[0]
+        # print(user_info)
+        if user_id:
+            return get_token(useremail, password)
+        else:
+            return {"message":"User does not exist"}
+    except Exception as e:
+        print("get_users_verification_status :: Exception Occurred :: ",e)
+        return {"message":"User does not exist"}
+    
+def people_update_changes(people_info):
+    if people_info:
+        user_email    = people_info[0]['user_email']
+        user_name     = people_info[0]['user_name']
+        user_password = people_info[0]['user_password']
+        email_info    = get_rows_by_col(PG_TABLE_USERS,pg_col_name_dict[PG_TABLE_USERS][2],user_email)
+        if not email_info:
+            status,user_id = create_new_user(user_name,user_email,user_password)
+            if user_id:
+                comment = "User created successfully"
+            return status,user_id,comment
+        else:
+            return False,"Already_exist",None
+        
+
+def create_new_user( 
+                        user_name,
+                        user_email,
+                        user_password
+                    ):
+    print_statement('createnewuser::',user_name, user_password)
+    
+    if insert_new_row(PG_TABLE_USERS, {
+        
+            pg_col_name_dict[PG_TABLE_USERS][1] : user_name,
+            pg_col_name_dict[PG_TABLE_USERS][2] : user_email,
+            pg_col_name_dict[PG_TABLE_USERS][3] : user_password,
+            pg_col_name_dict[PG_TABLE_USERS][4] : get_gmt_timestamp(),
+            pg_col_name_dict[PG_TABLE_USERS][5] : 1
+        }):
+        print_statement('createnewuser::user created')
+
+        user_id = get_user_id_from_email(user_email)
+        
+        return True,user_id
+
+    return False,None
+
+
+
+def get_user_id_from_email(useremail):
+    user_info = get_rows_by_col(PG_TABLE_USERS, pg_col_name_dict[PG_TABLE_USERS][2], useremail)     
+    if len(user_info):
+        row = user_info[0]
+        return row[0]
+    return None
+    
+
+def get_user_row_from_mail_id(userEmail):
+    user_info = get_rows_by_col(PG_TABLE_USERS, opt_conds = " lower(trim(both from " + pg_col_name_dict[PG_TABLE_USERS][2] + ")) = '" + userEmail.lower().strip() + "' ")      
+    if len(user_info):
+        row = user_info[0]
+        return row
+    return None
     
 
 def valid_user(token):
     try:
         decode = jwt.decode(token, JWT_SECRET,algorithms=['HS256'])
         # print("decode ::", decode)
-        user_info = get_row_by_id(PG_TABLE_USERS, pg_col_name_dict[PG_TABLE_USERS][PG_TABLE_USERS], decode['user_id'])
+        user_info = get_row_by_id(PG_TABLE_USERS, pg_col_name_dict[PG_TABLE_USERS][0], decode['user_id'])
         # print("user_info::", user_info)
         if len(user_info):
             try:
@@ -87,8 +144,28 @@ def valid_user(token):
         print_statement("\n\n\nerror in jwt\n\n\n")
     return False, None
 
+def get_jwt_token(payload):
+    return jwt.encode( payload, JWT_SECRET, algorithm='HS256')
 
-def query_generator(file_data, user_id, user_query):
+def get_token(useremail, password):
+    user_info = get_rows_by_col(PG_TABLE_USERS,opt_conds= " lower(" + pg_col_name_dict[PG_TABLE_USERS][2] + ") = '" + useremail.lower() + "' ")
+    if len(user_info):
+        row = user_info[0]
+        if(row[2] == password):
+            payload = {
+                'user_id': row[0],
+                'exp': datetime.utcnow() + timedelta(seconds=JWT_EXP_DELTA_SECONDS)
+            }
+            #prepare token for new user
+            encoded = get_jwt_token(payload)
+            hashed_pwd = hashlib.md5(str.encode(row[3])).hexdigest()
+
+            return {"data":encoded,"user_id":row[0],"auth_level":row[5],"status":"old","user_name":user_info[0][1],"secret":hashed_pwd}
+
+    return {"data":False}
+
+
+def query_generator(file_data, user_id, user_query, usecase):
     if file_data:
         temp_schema = ""
         # Iterate through all files in the file_data list
@@ -158,5 +235,33 @@ def query_generator(file_data, user_id, user_query):
                     model=MODEL,
                     messages=messages,
                         )
-                query = response.choices[0].message.content
-                return query
+                generated_query = response.choices[0].message.content
+                if generated_query:
+                    id,status = inser_records(user_id,user_query,usecase,generated_query)
+                return generated_query,status
+    return None,False
+            
+
+def inser_records(user_id,user_query,usecase,generated_query):
+    insert_dict = {
+            pg_col_name_dict[PG_TABLE_RECORDS][1] : usecase,
+            pg_col_name_dict[PG_TABLE_RECORDS][2] : user_query,
+            pg_col_name_dict[PG_TABLE_RECORDS][3] : generated_query,
+            pg_col_name_dict[PG_TABLE_RECORDS][4] : user_id,
+            pg_col_name_dict[PG_TABLE_RECORDS][5] : get_gmt_timestamp(),
+            pg_col_name_dict[PG_TABLE_RECORDS][6] : user_id,
+            pg_col_name_dict[PG_TABLE_RECORDS][7] : get_gmt_timestamp(),
+            pg_col_name_dict[PG_TABLE_RECORDS][8] : 1
+    }
+    status,id = insert_new_row_return_id(PG_TABLE_RECORDS,insert_dict,pg_col_name_dict[PG_TABLE_RECORDS][0])
+    return id , True
+
+
+
+            
+def get_user_id_from_email(useremail):
+    user_info = get_rows_by_col(PG_TABLE_USERS, pg_col_name_dict[PG_TABLE_USERS][2], useremail)     
+    if len(user_info):
+        row = user_info[0]
+        return row[0]
+    return None

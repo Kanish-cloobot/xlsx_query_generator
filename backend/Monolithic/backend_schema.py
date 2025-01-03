@@ -21,3 +21,20 @@ def init_pg_tables():
                   );
             ''')
     
+    cur.execute('''
+                  CREATE TABLE records
+                  (
+                        xqg_r_id                                     SERIAL primary key NOT NULL,
+                        xqg_r_usecase                                text,
+                        xqg_r_input_nl_query                         text,
+                        xqg_r_generated_query                        text,
+                        xqg_r_created_user_id                        bigint,
+                        xqg_r_created _timestamp                     timestamp,
+                        xqg_r_last_updated_user_id                   bigint,
+                        xqg_r_last_updated_timestamp                 timestamp,
+                        xqg_r_status                                   bigint,      
+                        CONSTRAINT   records_xqg_r_created_user_id
+                        FOREIGN KEY (xqg_r_created_user_id) 
+                        REFERENCES users(xqg_user_id) ON DELETE CASCADE  
+                  );
+            ''')
