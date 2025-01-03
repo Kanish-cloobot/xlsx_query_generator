@@ -210,11 +210,12 @@ def query_generator(file_data, user_id, user_query, usecase):
                 # Construct the table name (strip file extension)
                     table_name = os.path.splitext(file.filename)[0]
                     print_statement("table_name ::",table_name)
-                    model = setup_gemini()
                     # Replace placeholders in the prompt
                     prompt = extraction_prompt.replace("<df>", df.to_string(index=False))
                     prompt = prompt.replace("<table_name>", table_name)
                     print_statement("prompt ::",prompt)
+                    model = setup_gemini()
+
                     # response = completion(
                     #     model= MODEL,
                     #     messages=[{"role": "user", "content": prompt}],
